@@ -14,8 +14,8 @@ import { useForm } from "react-hook-form"
 import { SignUpValidation } from "@/lib/validation"
 import Loader from "@/components/Shared/Loader"
 import { Link } from "react-router-dom"
-import { createUserAccount } from "@/lib/appwrite/api"
 import { useToast } from "@/components/ui/use-toast"
+import { useCreateUserAccountMutation, useSignInAccountMutation } from "@/lib/react-query/queriesAndMutations"
 
 
 
@@ -26,6 +26,12 @@ const SignupForm = () => {
   const {toast} = useToast();
 
   const isLoading = false;
+
+
+  // define tanstack so it can call from appwrite
+  const { mutateAsync  : createUserAccount , isLoading : isCreatingUser } = useCreateUserAccountMutation();
+
+  const {mutateAsync : signInAccount , isLoading , isSigningIn} = useSignInAccountMutation();
 
     // 1. Define your form.
     const form = useForm<z.infer<typeof SignUpValidation>>({
@@ -50,7 +56,16 @@ const SignupForm = () => {
     }) ;
   }
 
-  // const session = await  signInAccount()
+  const session = await  signInAccount({
+    email : values.email,
+    password : values.password,
+  })
+
+  if(!session){
+    return toast ({
+      title : 'Sign in failed . Please try again'
+    })
+  }
     }
  
   return (
@@ -120,7 +135,7 @@ const SignupForm = () => {
           )}
         />
         <Button type="submit" className="w-full mt-4 shad-button_primary">
-          {isLoading? (
+          {isCreatingUser ? (
             <div className="gap-2 flex-center "><Loader></Loader>Loading</div>
           ): "Sign up"}</Button>
           <p className="mt-2 text-center text-small-regular text-light-2">
