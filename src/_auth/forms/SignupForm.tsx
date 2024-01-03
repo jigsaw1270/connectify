@@ -13,9 +13,10 @@ import { Button } from "@/components/ui/button"
 import { useForm } from "react-hook-form"
 import { SignUpValidation } from "@/lib/validation"
 import Loader from "@/components/Shared/Loader"
-import { Link } from "react-router-dom"
+import { Link , useNavigate } from "react-router-dom"
 import { useToast } from "@/components/ui/use-toast"
 import { useCreateUserAccountMutation, useSignInAccountMutation } from "@/lib/react-query/queriesAndMutations"
+import { useUserContext } from "@/context/AuthContext"
 
 
 
@@ -24,14 +25,15 @@ import { useCreateUserAccountMutation, useSignInAccountMutation } from "@/lib/re
 const SignupForm = () => {
   
   const {toast} = useToast();
-
+  const {checkAuthUser, isLoading : isUserLoading} = useUserContext();
+const navigate = useNavigate();
   const isLoading = false;
 
 
   // define tanstack so it can call from appwrite
-  const { mutateAsync  : createUserAccount , isLoading : isCreatingUser } = useCreateUserAccountMutation();
+  const { mutateAsync  : createUserAccount , isPending : isCreatingUser } = useCreateUserAccountMutation();
 
-  const {mutateAsync : signInAccount , isLoading , isSigningIn} = useSignInAccountMutation();
+  const {mutateAsync : signInAccount , isPending : isSigningIn} = useSignInAccountMutation();
 
     // 1. Define your form.
     const form = useForm<z.infer<typeof SignUpValidation>>({
@@ -65,6 +67,16 @@ const SignupForm = () => {
     return toast ({
       title : 'Sign in failed . Please try again'
     })
+  }
+  const isLoggedIn = await checkAuthUser();
+
+  if(isLoggedIn){
+    form.reset();
+
+    navigate('/')
+
+  }else{
+   return   toast({ title : 'Sign up failed . Please ry again. '})
   }
     }
  
@@ -139,7 +151,7 @@ const SignupForm = () => {
             <div className="gap-2 flex-center "><Loader></Loader>Loading</div>
           ): "Sign up"}</Button>
           <p className="mt-2 text-center text-small-regular text-light-2">
-            Already a user ? <Link to="sign-in" className="ml-1 text-primary-500 text-small-semibold">Log in</Link>
+            Already a user ? <Link to="/sign-in" className="ml-1 text-primary-500 text-small-semibold">Log in</Link>
           </p>
       </form>
       </div>
